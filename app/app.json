@@ -1,5 +1,5 @@
 {
-  "name": "feishudoc",
+  "name": "doc2doc",
   "script": "./bin/www",
   "cwd": "./",
   "watch": [

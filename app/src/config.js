@@ -1,5 +1,5 @@
 var config = {
-  cookie_name: 'feishudoc_sid'
+  cookie_name: 'doc2doc_sid'
 };
 
 module.exports = config;

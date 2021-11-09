@@ -25,7 +25,7 @@ app.use(express.urlencoded({ limit: '100mb', extended: false }));
 app.use(cookieParser());
 app.use(session({
   name: config.cookie_name,
-  secret: 'feishudoc',
+  secret: 'doc2doc',
   resave: false,
   rolling: false,
   saveUninitialized: false,

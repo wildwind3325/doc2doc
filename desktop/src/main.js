@@ -4,7 +4,6 @@ import router from './router';
 import axios from 'axios';
 import './api/enhance';
 import ViewUI from 'view-design';
-// import 'view-design/dist/styles/iview.css';
 import './main.css';
 
 Vue.config.productionTip = false;
