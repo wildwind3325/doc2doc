@@ -18,9 +18,25 @@
       <template slot-scope="{ row, index }" slot="name">
         <span :class="row.type === 0 ? 'link' : ''" @click="navi(row)">{{ formatName(row) }}</span>
       </template>
+      <template slot-scope="{ row, index }" slot="ext">
+        <div v-if="row.type === 2">
+          <Select v-model="row.ext">
+            <Option value="docx">Word</Option>
+            <Option value="pdf">PDF</Option>
+          </Select>
+        </div>
+        <div v-else-if="row.type === 3 || row.type === 8">Excel</div>
+        <div v-else-if="row.type === 12">附件</div>
+        <div v-else></div>
+      </template>
       <template slot-scope="{ row, index }" slot="action">
-        <Button type="primary">传输</Button>
-        <Button v-show="row.type !== 0" type="warning" style="margin-left: 5px;" @click="download(row)">下载</Button>
+        <div v-show="row.type !==  0 && allowedTypes.indexOf(row.type) >= 0">
+          <Button type="primary">传输</Button>
+          <Button type="warning" style="margin-left: 5px;" @click="download(row)">下载</Button>
+        </div>
+        <div v-show="row.type !== 0 && allowedTypes.indexOf(row.type) < 0">
+          暂不支持
+        </div>
       </template>
     </Table>
   </div>
@@ -45,7 +61,7 @@ export default {
         width: 200,
         align: 'center'
       }, {
-        title: '类型',
+        title: '分类',
         key: 'type',
         width: 80,
         align: 'center'
@@ -53,12 +69,18 @@ export default {
         title: '标签',
         key: 'tags'
       }, {
+        title: '类型',
+        slot: 'ext',
+        width: 120,
+        align: 'center'
+      }, {
         title: '操作',
         slot: 'action',
         width: 180,
         align: 'center'
       }],
       items: [],
+      allowedTypes: [2, 3, 8, 12],
       checkedItems: []
     };
   },
@@ -84,14 +106,19 @@ export default {
               },
               on: {
                 input: (val) => {
-                  localStorage.setItem('session', val);
-                  this.status = 'success';
-                  this.statusText = '已登录';
                   this.session = val;
-                  this.refresh(-1);
                 }
               }
-            })
+            });
+          },
+          onOk: () => {
+            localStorage.setItem('session', this.session);
+            this.status = 'success';
+            this.statusText = '已登录';
+            this.refresh(-1);
+          },
+          onCancel: () => {
+            this.session = '';
           }
         });
       } else {
@@ -150,6 +177,8 @@ export default {
     download(row) {
       if (row.type === 12) {
         window.open('http://localhost:3000/api/doc/download/file?token=' + row.obj_token + '&session=' + encodeURIComponent(this.session) + '&filename=' + encodeURIComponent(row.name), '_blank');
+      } else {
+        window.open('http://localhost:3000/api/doc/download/doc?token=' + row.obj_token + '&session=' + encodeURIComponent(this.session) + '&type=' + row.type + '&ext=' + row.ext, '_blank');
       }
     },
     selectItems(selection) {

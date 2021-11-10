@@ -1,15 +1,20 @@
 var express = require('express');
 var http = require('../../api/http');
+var util = require('../../api/util');
 
 var parseResponse = (data, list) => {
   for (let i = 0; i < data.data.node_list.length; i++) {
     let token = data.data.node_list[i];
     let node = data.data.entities.nodes[token];
+    let ext = '';
+    if (node.type === 2) ext = 'docx';
+    if (node.type === 3 || node.type === 8) ext = 'xlsx';
     list.push({
       token: token,
       name: node.name,
       type: node.type,
-      obj_token: node.obj_token
+      obj_token: node.obj_token,
+      ext: ext
     });
   }
   return {
@@ -112,6 +117,62 @@ router.get('/download/file', async function (req, res, next) {
       encoding: null
     });
     res.attachment(req.query.filename).send(response.body);
+  } catch (err) {
+    res.send({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+router.get('/download/doc', async function (req, res, next) {
+  try {
+    let token = req.query.token;
+    let type = req.query.type;
+    let file_type = '';
+    if (type === '2') file_type = 'doc';
+    else if (type === '3') file_type = 'sheet';
+    else if (type === '8') file_type = 'bitable';
+    let file_extension = req.query.ext;
+    let response = await http.request({
+      method: 'POST',
+      url: 'https://kwh0jtf778.feishu.cn/space/api/export/create/',
+      headers: {
+        'Cookie': 'session=' + req.query.session,
+        'Referer': 'https://kwh0jtf778.feishu.cn/docs/' + token
+      },
+      body: {
+        token: token,
+        type: file_type,
+        file_extension: file_extension,
+        event_source: '1'
+      },
+      json: true
+    });
+    let data = response.body;
+    let ticket = data.data.ticket;
+    await util.wait(1000);
+    response = await http.request({
+      method: 'GET',
+      url: 'https://kwh0jtf778.feishu.cn/space/api/export/result/' + ticket + '?token=' + token + '&type=' + file_type,
+      headers: {
+        'Cookie': 'session=' + req.query.session,
+        'Referer': 'https://kwh0jtf778.feishu.cn/docs/' + token
+      }
+    });
+    data = JSON.parse(response.body);
+    if (data.data.result.job_status !== 0) throw new Error('下载文件失败');
+    await util.wait(1000);
+    response = await http.request({
+      method: 'GET',
+      url: 'https://kwh0jtf778.feishu.cn/space/api/box/stream/download/all/' + data.data.result.file_token,
+      headers: {
+        'Cookie': 'session=' + req.query.session,
+        'Referer': 'https://kwh0jtf778.feishu.cn/docs/' + token
+      },
+      encoding: null
+    });
+    res.attachment(data.data.result.file_name + '.' + file_extension).send(response.body);
   } catch (err) {
     res.send({
       success: false,
