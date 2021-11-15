@@ -1,11 +1,11 @@
 import Vue from 'vue';
-import Router from 'vue-router';
+import VueRouter from 'vue-router';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 
-Vue.use(Router);
+Vue.use(VueRouter);
 
-const router = new Router({
+const router = new VueRouter({
   mode: 'hash',
   routes: [{
     path: '/',
